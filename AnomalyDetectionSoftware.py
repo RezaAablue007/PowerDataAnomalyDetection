@@ -308,7 +308,7 @@ def main():
                         result_window.close()
                 break
             if event == "CLOUD_LINK":
-                webbrowser.open("http://example.com")
+                webbrowser.open("http://18.216.107.70")
 
         window.close()
 
