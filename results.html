@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f4f5f7;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            padding: 20px;
+        }
+
+        .section-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .metric-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .metric-list li {
+            margin-bottom: 5px;
+        }
+
+        .img-container {
+            text-align: center;
+        }
+
+        .anomaly-counts {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        .anomaly-count {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 10px;
+        }
+
+        #results-section {
+            background-color: #64778D;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Analysis Results</h1>
+
+        {% for column, result in results.items() %}
+            <div class="section" id="results-section">
+                <p>Results for {{ column }}</p>
+                <!-- Linear Regression forecast plot -->
+                <div class="row img-container">
+                    <div class="col">
+                        <img src="data:image/png;base64,{{ result.lr_plot }}" alt="Linear Regression Forecast Plot" class="img-fluid">
+                    </div>
+                </div>
+
+                <div class="row img-container">
+                    <div class="col">
+                        <img src="data:image/png;base64,{{ result.lr_residual_plot }}" alt="Linear Regression Residuals Plot" class="img-fluid">
+                    </div>
+                </div>
+
+                <!-- End of Linear regression forecast plot -->
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="metric-list">
+                            <li>Linear Regression MAPE: {{ '{:.2f}%'.format(result.lr_metrics[0]) }}</li>
+                            <li>Linear Regression MAD: {{ '{:.2f}'.format(result.lr_metrics[1]) }}</li>
+                            <li>Linear Regression MSE: {{ '{:.2f}'.format(result.lr_metrics[2]) }}</li>
+                            <li>Linear Regression RMSE: {{ '{:.2f}'.format(result.lr_metrics[3]) }}</li>
+                            <li>Linear Regression R2: {{ '{:.2f}'.format(result.lr_metrics[4]) }}</li>
+                            <li>Linear Regression MAE: {{ '{:.2f}'.format(result.lr_metrics[5]) }}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Market Random Forest Forecast Plot -->
+
+                <div class="row img-container">
+                    <div class="col">
+                        <img src="data:image/png;base64,{{ result.rf_plot }}" alt="Random Forest Forecast Plot" class="img-fluid">
+                    </div>
+                </div>
+
+                <div class="row img-container">
+                    <div class="col">
+                        <img src="data:image/png;base64,{{ result.rf_residual_plot }}" alt="Random Forest Residuals Plot" class="img-fluid">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="metric-list">
+                            <li>Random Forest MAPE: {{ '{:.2f}%'.format(result.rf_metrics[0]) }}</li>
+                            <li>Random Forest MAD: {{ '{:.2f}'.format(result.rf_metrics[1]) }}</li>
+                            <li>Random Forest MSE: {{ '{:.2f}'.format(result.rf_metrics[2]) }}</li>
+                            <li>Random Forest RMSE: {{ '{:.2f}'.format(result.rf_metrics[3]) }}</li>
+                            <li>Random Forest R2: {{ '{:.2f}'.format(result.rf_metrics[4]) }}</li>
+                            <li>Random Forest MAE: {{ '{:.2f}'.format(result.rf_metrics[5]) }}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- End of Market Random Forest -->
+
+                <div class="row img-container">
+                    <div class="col-md-12">
+                        <img src="data:image/png;base64,{{ result.ad_plot }}" alt="Anomaly Detection Plot" class="img-fluid">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>Number of anomalies detected in {{ column }} by season</p>
+                        <ul class="metric-list">
+                            <li>Spring - {{ result.seasonal_anomalies_dict.get('Spring', 0) }}</li>
+                            <li>Summer - {{ result.seasonal_anomalies_dict.get('Summer', 0) }}</li>
+                            <li>Fall - {{ result.seasonal_anomalies_dict.get('Fall', 0) }}</li>
+                            <li>Winter - {{ result.seasonal_anomalies_dict.get('Winter', 0) }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
