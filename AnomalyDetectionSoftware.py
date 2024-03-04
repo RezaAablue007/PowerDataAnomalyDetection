@@ -124,39 +124,40 @@ def preprocess_data(data, column):
     return data
 
 # Forecast using Linear Regression model for the next year
-def linear_regression_forecast(data, column):
+def linear_regression_forecast(data, column, forecast_periods):
     preprocessed_data = preprocess_data(data, column)
     features = ['Sin_Time', 'Cos_Time']
     X = preprocessed_data[features]
     y = preprocessed_data[column].values
     model = LinearRegression()
     model.fit(X, y)
-    forecast_time = np.arange(len(preprocessed_data), len(preprocessed_data) + 8760)
+    forecast_time = np.arange(len(data))
     forecast_X = pd.DataFrame({
         'Sin_Time': np.sin(2 * np.pi * forecast_time / 8760),
         'Cos_Time': np.cos(2 * np.pi * forecast_time / 8760),
     })
     forecast = model.predict(forecast_X)
-    return forecast
+    return forecast[:forecast_periods]
 
 # Forecast using Random Forest model for the next year
-def random_forest_forecast(data, column):
+def random_forest_forecast(data, column, forecast_periods):
     preprocessed_data = preprocess_data(data, column)
     rf_model = RandomForestRegressor(n_estimators=100, random_state=0)
     X = preprocessed_data[[column]].shift(1).fillna(method='bfill')
     y = preprocessed_data[column]
     rf_model.fit(X, y)
-    forecast_X = X.tail(8760).values.reshape(-1, 1)
+    forecast_X = X.tail(len(data)).values.reshape(-1, 1)
     forecast = rf_model.predict(forecast_X)
-    return forecast
+    return forecast[:forecast_periods]
 
 # Plot forecast with anomalies - now returns a figure object
 def plot_forecast(data, forecast, title, column, anomalies=None, residuals=None):
     fig, ax = plt.subplots(figsize=(10, 10), dpi=100)
-    ax.plot(data['DateTime'], data[column], label='Original Data')
+    ax.plot(data['DateTime'], data[column], label='Original Data', color='blue')
     if forecast is not None:
-        forecast_dates = pd.date_range(start=data['DateTime'].iloc[-1] + pd.Timedelta(hours=1), periods=len(forecast), freq='H')
-        ax.plot(forecast_dates, forecast, label='Forecasted Data', color='orange')
+        # Align forecast_dates with the original data's DateTime
+        forecast_dates = data['DateTime']
+        ax.plot(forecast_dates, forecast, label='Forecasted Data', color='orange', linestyle='--')
     if anomalies is not None and residuals is None:
         anomaly_dates = data['DateTime'].iloc[anomalies]
         ax.scatter(anomaly_dates, data[column].iloc[anomalies], color='red', label='Anomalies', zorder=5)
@@ -222,6 +223,8 @@ def main():
                 break
             if event == "SHOW_DESC":
                 show_descriptions()  # This will show the descriptions window
+            
+
             if event == 'Submit':
                 file_path = values['FILE_PATH']
                 window.close()
@@ -235,10 +238,12 @@ def main():
                 lr_metrics_dict = {}
                 rf_metrics_dict = {}
 
+                forecast_periods = len(data)  # Use the length of the original data for the forecast period
+
                 for column in ['Market Demand', 'Ontario Demand']:
                     anomaly_indices, residuals, seasonal_anomalies_dict, monthly_anomalies_dict = stl_anomaly_detection(data, column)
-                    lr_forecast = linear_regression_forecast(data, column)
-                    rf_forecast = random_forest_forecast(data, column)
+                    lr_forecast = linear_regression_forecast(data, column, forecast_periods)
+                    rf_forecast = random_forest_forecast(data, column, forecast_periods)
 
                     # Calculate metrics for both models
                     lr_metrics = calculate_accuracy_metrics(data[column][:len(lr_forecast)], lr_forecast)
